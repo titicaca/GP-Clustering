@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>GP Clustering For Mopsi Dataset</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+      #panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        margin-left: -180px;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+    <script type = "text/javascript" language = "javascript">
+// In the following example, markers appear when the user clicks on the map.
+// The markers are stored in an array.
+// The user can then click an option to hide, show or delete the markers.
+var map;
+var markers = [];
+
+function initialize() {
+  var centerPoint = new google.maps.LatLng(62.5983,29.7439);
+  var mapOptions = {
+    zoom: 12,
+    center: centerPoint,
+//    mapTypeId: google.maps.MapTypeId.TERRAIN
+  };
+  map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+
+  loadLocations();
+  var marker = new google.maps.Marker({
+		position: centerPoint,
+		map: map
+	}); 
+
+//  markers.push(marker);
+//  setAllMap(map);
+}
+
+function loadLocations(){
+	alert("loading data..");
+	var fso = new ActiveXObject("Scripting.FileSystemObject");
+	var file = fso.OpenTextFile("C:\\Users\\Titicaca\\Documents\\GitHub\\GP-Clustering\\dataset\\Mopsi-Joensuu.txt",1);
+	var s = "";
+	var count = 0;
+	while(!file.AtEndOfStream){
+		count++;
+		s = file.ReadLine();
+		var items = s.split(" ");
+		var x = parseFloat(items[0]);
+		var y = parseFloat(items[1]);
+//alert(x + "," + y);		
+		var location = new google.maps.LatLng(x,y);
+		var marker = new google.maps.Marker({
+			position: location,
+			map: map
+		});
+		markers.push(marker);
+	}
+	alert("data loaded..\n" + "Count:" + count);
+	
+}
+
+// Sets the map on all markers in the array.
+function setAllMap(map) {
+  for (var i = 0; i < markers.length; i++) {
+    markers[i].setMap(map);
+  }
+}
+
+function showMarkers() {
+  setAllMap(map);
+}
+
+function showClusters() {
+  setAllMap(map);
+}
+
+function clearMarkers() {
+  setAllMap(null);
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="panel">
+      <input onclick="showMarkers();" type=button value="Show All Markers">
+      <input onclick="showClusters();" type=button value="GPClustering">
+      <input onclick="clearMarkers();" type=button value="Clear Markers">
+    </div>
+    <div id="map-canvas"></div>
+    <p>Click on the map to add markers.</p>
+  </body>
+</html>

@@ -52,7 +52,10 @@ def plotHeatMap(heatmap, extent):
     
 #init parameters for the model
 # need to be determined for different dataset
-alpha = 1
+v0 = 1
+l = array([1. for i in range(2)])
+v1 = 0
+v2 = 1
 
 # <markdowncell>
 
@@ -62,11 +65,11 @@ alpha = 1
 
 #Calculate Covariance Matrix C
 def kernelFunction(x1, x2):
-    c = 0.;
+    c = 0.
     for i in range(len(x1)):
-        c += alpha * (x1[i] - x2[i]) **2
+        c += l[i] * ((x1[i] - x2[i]) **2 )
 
-    c = math.exp(- 0.5 * c)
+    c = v0 * math.exp(- 0.5 * c)+ v1
     return c
 
 #calculate the whole covariance matrix 
@@ -88,7 +91,7 @@ def getVariance(data):
 def getInversionMatrix(data, C):
     size = len(data[0,:])
     var = getVariance(data)
-    return  (C + var * matrix(np.eye(size)) ).I 
+    return  (C + v2 *var * matrix(np.eye(size)) ).I 
 
 #calcalate the variance for a given point x
 def varianceFunction(x, data, inv):
@@ -242,6 +245,12 @@ def getPointClusters(sepsClusters, sepIndexMap):
     for i in range (len(sepIndexMap)):
         clusters[i] = sepsClusters[sepIndexMap[i]]
     return clusters
+
+# <codecell>
+
+
+# <codecell>
+
 
 # <codecell>
 
