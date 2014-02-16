@@ -30,6 +30,7 @@ def plotCluster(X,Y,clusters,title):
     colors = np.arange(len(clusters))
     t = [colors[(int)(clusters[i])]  for i in range (len(clusters))]
     plt.scatter(X, Y, c=t)
+    plt.title(title)
     plt.show()
     
 def plotCluster2(X,Y,clusters,title):
@@ -52,8 +53,9 @@ def plotHeatMap(heatmap, extent):
     
 #init parameters for the model
 # need to be determined for different dataset
+# alpha = 1
 v0 = 1
-l = array([1. for i in range(2)])
+l =  [1. for i in range(2)]
 v1 = 0
 v2 = 1
 
@@ -65,7 +67,7 @@ v2 = 1
 
 #Calculate Covariance Matrix C
 def kernelFunction(x1, x2):
-    c = 0.
+    c = 0.;
     for i in range(len(x1)):
         c += l[i] * ((x1[i] - x2[i]) **2 )
 
@@ -85,7 +87,7 @@ def getCovarianceMatrix(data):
 #TODO check how to calculate the variance
 #calculate variance of dataset
 def getVariance(data):
-    return np.var(data)
+    return np.var(data[0,:]) + np.var(data[1,:])
 
 #calculate inversion of Matrix A
 def getInversionMatrix(data, C):
@@ -246,11 +248,245 @@ def getPointClusters(sepsClusters, sepIndexMap):
         clusters[i] = sepsClusters[sepIndexMap[i]]
     return clusters
 
+# <markdowncell>
+
+# ##Alogorithm Evaluation
+
+# <markdowncell>
+
+# $n_{r,c}$ -- the number of data points that belong to reference cluster r and are assigned to cluster c by a clustering algorithm
+# 
+# $n$ -- the number of all the data points
+# 
+# $n_r$ -- the number of the data points in the reference cluster r
+# 
+# $n_c$ -- the number of the data points in the cluser c obtained by a clustering algorithm
+
 # <codecell>
 
+# count n_{r,c}
+
+def getCountNrc(references, clusters, referencesNum, clustersNum):
+    size = len(clusters)
+    Nrc = [[0 for c in range(clustersNum)] for r in range(referencesNum) ]
+    for r in range (referencesNum):
+        for c in range (clustersNum):
+            for i in range (size):
+                if (references[i] -1 == r and clusters[i]-1 == c):
+                    Nrc[r][c] += 1
+    return Nrc
+
+# <markdowncell>
+
+# ###1. Reference error rate RE
+
+# <markdowncell>
+
+# $ RE = 1 - \frac{\sum_r {max_c n_{r,c}}}{n}$
 
 # <codecell>
 
+def getRE(references, clusters, referencesNum, clustersNum, Nrc):
+    size = len(clusters)
+    sumTmp = 0.
+    for r in range (referencesNum):
+        maxTmp = 0.
+        for c in range (clustersNum):
+            if(maxTmp < Nrc[r][c]):
+                maxTmp = Nrc[r][c]
+        sumTmp += maxTmp
+    return 1 - sumTmp / size
+
+# <markdowncell>
+
+# ###2. Cluster error
+
+# <markdowncell>
+
+# $CE = 1 - \frac{\sum_c {max_r {n_{r,c}}}} {n}$
+
+# <codecell>
+
+def getCE(references, clusters, referencesNum, clustersNum, Nrc):
+    size = len(clusters)
+    sumTmp = 0.
+    for c in range (clustersNum):
+        maxTmp = 0.
+        for r in range (referencesNum):
+            if(maxTmp < Nrc[r][c]):
+                maxTmp = Nrc[r][c]
+        sumTmp += maxTmp
+    return 1 - sumTmp / size
+
+# <markdowncell>
+
+# ###3. F Score
+
+# <markdowncell>
+
+# The FScore of the reference cluster r and cluster c is defined as:
+# 
+# $F_{r,c} = \frac {2 R_{r,c} P_{r,c}} {R_{r,c} + p_{r,c}}$ 
+# 
+# Where $R_{r,c} = \frac {n_{r,c}}{n_c}$ represents Recall and $P_{r,c} = \frac{n_{r,c}}{n_r}$ represents Precision
+
+# <markdowncell>
+
+# The FScore of the reference cluster r is the maximum FScore value over all the clusters as
+# 
+# $F_r = max_c F_{r,c}$
+
+# <markdowncell>
+
+# The overall FScore is defined as
+# 
+# 
+# $FScore = \sum_r \frac {n_r}{n} F_r$
+# 
+# In general, the higher the FScore, the better the clustering result
+
+# <codecell>
+
+def getFScore(references, clusters, referencesNum, clustersNum, Nrc):  
+    size = len(clusters)
+    
+    Nr = [0. for r in range (referencesNum)]
+    Nc = [0. for c in range (clustersNum)]
+   
+    for i in range (size):
+        Nr[int(references[i]) -1 ] += 1.
+        Nc[int(clusters[i]) - 1 ] += 1.
+
+
+    R = [[ float(Nrc[r][c]) / Nr[r] for c in range (clustersNum)] for r in range (referencesNum)]
+    P = [[ float(Nrc[r][c]) /Nc[c] for c in range (clustersNum)] for r in range (referencesNum)]
+    F = [[ 2*R[r][c] * P[r][c] / (R[r][c] + P[r][c] + 0.000000000000001) for c in range (clustersNum) ] for r in range (referencesNum)]
+#     print "R", array(R)
+#     print "P", array(P)
+#     print "F", array(F)
+    
+    Fr = [ 0. for r in range (referencesNum)]
+    
+    for r in range (referencesNum):
+        maxTmp = 0.
+        for c in range (clustersNum):
+            if(maxTmp < F[r][c]):
+                maxTmp = F[r][c]
+        Fr[r] = maxTmp
+
+#     print "Fr", array(Fr)
+    
+    sumTmp = 0.
+    
+
+    
+    for r in range (referencesNum):
+        sumTmp += Nr[r] / size * Fr[r]
+        
+    return sumTmp
+
+# <markdowncell>
+
+# ##Test
+
+# <codecell>
+
+# #init
+# dataset = loadtxt("dataset\R15.txt")
+# data = array([dataset[:,0], dataset[:,1]])
+# clusters = dataset[:,2]
+# size = len(clusters)
+
+# X = data[0,:]
+# Y = data[1,:]
+# dimension = 2
+# l = [2,2]
+# plotScatter(X,Y,"Scatter Plot", 'g')
+
+# #calculate Covariance Matrix
+# C = getCovarianceMatrix(data)
+# invA = getInversionMatrix(data, C)
+
+# grid_x = [0 + 0.25 * i for i in range (80) ] 
+# grid_y = [20 - 0.25 * i for i in range (80) ] 
+# variances = [[0 for i in range (len(grid_x)) ] for j in range (len(grid_y))]
+
+# for i in range (len(grid_y)):
+#     for j in range (len(grid_x)):
+#         variances[i][j] = varianceFunction([grid_x[j], grid_y[i]], data, invA)
+        
+# heatmap = variances
+# extent = [grid_x[0], grid_x[-1], grid_y[-1], grid_y[0]]
+
+# plotHeatMap(heatmap, extent)
+
+# <codecell>
+
+# #get SPEs
+# SEPs = array([getEquilibriumPoint(data[:,i], data, invA, 0.5, 1000) for i in range (size) ])
+# sepList, sepIndexMap = reduceSEPs(SEPs, 0.99)
+# print "size of reduced SEPs: " , len(sepList)
+# plotScatter(sepList[:,0],sepList[:,1],"reduced SEPs Scatter Plot" ,"r")
+
+# <codecell>
+
+# #get adjacency matrix
+# A = getAdjacencyMatrix(sepList, 0.50, 5, data, invA)
+# sepsClusters = getSEPsClusters(A, sepList)
+# print sepsClusters
+# plotCluster(sepList[:,0],sepList[:,1],sepsClusters,"Scatter Plot")
+
+# <codecell>
+
+# #get clusters assignment
+# results = getPointClusters(sepsClusters, sepIndexMap)
+# plotCluster2(X,Y,results,"Scatter Plot")
+
+# <codecell>
+
+# nrc =getCountNrc(clusters,results,int(max(clusters)),int(max(results)))
+
+# <codecell>
+
+# getRE(clusters,results,int(max(clusters)),int(max(results)),nrc)
+
+# <codecell>
+
+# getCE(clusters,results,int(max(clusters)),int(max(results)),nrc)
+
+# <codecell>
+
+# getFScore(clusters,results,int(max(clusters)),int(max(results)),nrc)
+
+# <codecell>
+
+# #get adjacency matrix
+# A = getAdjacencyMatrix(sepList, 0.56, 5, data, invA)
+# sepsClusters = getSEPsClusters(A, sepList)
+# print sepsClusters
+# plotCluster(sepList[:,0],sepList[:,1],sepsClusters,"Scatter Plot")
+
+# <codecell>
+
+# #get clusters assignment
+# results = getPointClusters(sepsClusters, sepIndexMap)
+# plotCluster2(X,Y,results,"Scatter Plot")
+
+# <codecell>
+
+# nrc =getCountNrc(clusters,results,int(max(clusters)),int(max(results)))
+
+# <codecell>
+
+# getRE(clusters,results,int(max(clusters)),int(max(results)),nrc)
+
+# <codecell>
+
+# getCE(clusters,results,int(max(clusters)),int(max(results)),nrc)
+
+# <codecell>
+
+# getFScore(clusters,results,int(max(clusters)),int(max(results)),nrc)
 
 # <codecell>
 

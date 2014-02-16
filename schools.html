@@ -26,8 +26,8 @@ var markers = [];
 var count = 0;
 var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/schools_maps.png';
 var iconClustersBase = "http://maps.google.com/mapfiles/kml/paddle/"; 
-
-
+var mVar = 0.1;
+var infoWindows = [];
 function initialize() {
   var centerPoint = new google.maps.LatLng(-35.351057, 149.055559);
 	var mapOptions = {
@@ -47,7 +47,7 @@ function initialize() {
 function loadLocations(){
 	alert("loading data..");
 	var fso = new ActiveXObject("Scripting.FileSystemObject");
-	var file = fso.OpenTextFile("C:\\Users\\Titicaca\\Documents\\GitHub\\GP-Clustering\\dataset\\school.txt",1);
+	var file = fso.OpenTextFile("C:\\Users\\Titicaca\\Documents\\GitHub\\GP-Clustering\\dataset\\actschools.txt",1);
 	var s = "";
 	count = 0;
 //	alert(count);
@@ -57,8 +57,8 @@ function loadLocations(){
 //		alert(count);
 		s = file.ReadLine();
 //		alert(s);
-		var items = s.split(/[\s]+/);
-//		var items = s.split("\t");
+//		var items = s.split(/[\s]+/);
+		var items = s.split("\t");
 //		alert(items[1] + "," + items[0]);
 //		var x = parseFloat(items[6]) + parseFloat(items[7])/100;
 //		var y = - (parseFloat(items[8]) + parseFloat(items[9])/100);
@@ -66,12 +66,26 @@ function loadLocations(){
 		var y = parseFloat(items[0])
 //		alert(x + "," + y);		
 		var location = new google.maps.LatLng(x,y);
+		
+		var myinfowindow = new google.maps.InfoWindow({
+			content: "point id: " + (count - 1) + "<br />" + "School Name: " + items[2] + "<br />" + "Address: " + items[3] + ", " + items[4] + "<br />" + "Post code: " + items[5] 
+		});
+		
+		
 		var marker = new google.maps.Marker({
 			position: location,
 			map: map,
-			icon: iconBase
+			icon: iconBase,
+			clickable: true,
+			infowindow: myinfowindow
 		});
+	
+		google.maps.event.addListener(marker, 'click', function() {
+			this.infowindow.open(map, this);
+		});
+		
 		markers.push(marker);
+
 	}
 	alert("data loaded..\n" + "Count:" + count);
 	
@@ -87,7 +101,7 @@ function skiprows(numRows, file){
 
 function loadClusters(){
 	var fso = new ActiveXObject("Scripting.FileSystemObject");
-	var file = fso.OpenTextFile("C:\\Users\\Titicaca\\Documents\\GitHub\\GP-Clustering\\results\\schools_Var=0.20.txt",1);
+	var file = fso.OpenTextFile("C:\\Users\\Titicaca\\Documents\\GitHub\\GP-Clustering\\results\\schools_Var="+ mVar + "0.txt",1);
 	count = 0;
 	clusterNum = 0;
 	clusters = [];
@@ -138,6 +152,13 @@ function clearMarkers() {
 	setAllMap(null);
 }
 
+function changeFunc() {
+    var selectBox = document.getElementById("selectBox");
+    var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+    mVar = selectedValue;
+//	alert("The Current Cutting Level Variance is : " + mVar);
+}
+
 google.maps.event.addDomListener(window, 'load', initialize);
 
     </script>
@@ -146,6 +167,12 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <div id="panel">
       <input onclick="showMarkers();" type=button value="Show All Markers">
       <input onclick="showClusters();" type=button value="GPClustering">
+	  <select id="selectBox" onchange="changeFunc();">
+		<option value="0.1">Variance = 0.1</option>
+		<option value="0.2">Variance = 0.2</option>
+		<option value="0.3">Variance = 0.3</option>
+		<option value="0.4">Variance = 0.4</option>
+	  </select>
       <input onclick="clearMarkers();" type=button value="Clear Markers">
     </div>
     <div id="map-canvas"></div>
