@@ -27,8 +27,8 @@ def plotCluster(X,Y,clusters,title):
 #    fig = plt.figure()
  #   ax = fig.add_subplot(111)
     
-    colors = np.arange(len(clusters))
-    t = [colors[(int)(clusters[i])]  for i in range (len(clusters))]
+    colors = np.arange(int(max(clusters)))
+    t = [colors[(int)(clusters[i]) - 1]  for i in range (len(clusters))]
     plt.scatter(X, Y, c=t)
     plt.title(title)
     plt.show()
@@ -54,8 +54,9 @@ def plotHeatMap(heatmap, extent):
 #init parameters for the model
 # need to be determined for different dataset
 # alpha = 1
+dimension = 2
 v0 = 1
-l =  [1. for i in range(2)]
+l =  [1. for i in range(dimension)]
 v1 = 0
 v2 = 1
 
@@ -68,7 +69,7 @@ v2 = 1
 #Calculate Covariance Matrix C
 def kernelFunction(x1, x2):
     c = 0.;
-    for i in range(len(x1)):
+    for i in range(dimension):
         c += l[i] * ((x1[i] - x2[i]) **2 )
 
     c = v0 * math.exp(- 0.5 * c)+ v1
@@ -87,7 +88,10 @@ def getCovarianceMatrix(data):
 #TODO check how to calculate the variance
 #calculate variance of dataset
 def getVariance(data):
-    return np.var(data[0,:]) + np.var(data[1,:])
+    variance = 0
+    for i in range (dimension):
+        variance += np.var(data[i,:])
+    return variance
 
 #calculate inversion of Matrix A
 def getInversionMatrix(data, C):
@@ -104,9 +108,10 @@ def varianceFunction(x, data, inv):
 
 
 
-def getMaxVariance():
+def getMaxVariance(data, invA):
     maxVars = 0.
     maxIndex = 0
+    size = len(data[0,:])
     for i in range (size):
         if(i == 0):
             maxVar = varianceFunction(data[:,i], data, invA)
@@ -118,7 +123,8 @@ def getMaxVariance():
                 maxIndex = i
     return maxVar, data[:,maxIndex]
 
-def getMaxVariances(num):
+def getMaxVariances(data, invA, num):
+    size = len(data[0,:])
     maxVars = [ 0. for i in range (num)]
     variances = array([varianceFunction(data[:,i], data, invA) for i in range(size)])
     sorted_vars = sort(variances)
@@ -137,24 +143,32 @@ def getMaxVariances(num):
 def nablaVarianceFunction(x, data, inv):
     size = len(data[0,:])
     k = matrix( [kernelFunction(x, data[:,i]) for i in range (size)]).T
-    nablaK_x1 = matrix([ - kernelFunction(x, data[:,i]) * (x[0] - data[0,i]) for i in range (size)]).T
-    nablaK_x2 = matrix([ - kernelFunction(x, data[:,i]) * (x[1] - data[1,i]) for i in range (size)]).T
-    delta_x1 =  nablaK_x1.T * inv * k + k.T * inv * nablaK_x1 
-    delta_x2 =  nablaK_x2.T * inv * k + k.T * inv * nablaK_x2
-    return [delta_x1[0,0], delta_x2[0,0]]
+    
+    nablaK_arr = [ matrix([ - kernelFunction(x, data[:,i]) * (x[d] - data[d,i]) for i in range (size)]).T for d in range (dimension) ] 
+    deltaX_arr = [ float (nablaK_arr[d].T * inv * k + k.T * inv * nablaK_arr[d]) for d in range (dimension) ]  
+    
+#     nablaK_x1 = matrix([ - kernelFunction(x, data[:,i]) * (x[0] - data[0,i]) for i in range (size)]).T
+#     nablaK_x2 = matrix([ - kernelFunction(x, data[:,i]) * (x[1] - data[1,i]) for i in range (size)]).T
+#     delta_x1 =  nablaK_x1.T * inv * k + k.T * inv * nablaK_x1 
+#     delta_x2 =  nablaK_x2.T * inv * k + k.T * inv * nablaK_x2
+
+    return deltaX_arr
 
 #gradient descent iteration
 def gradientDescentIteration(x, data, inv, ita):
     delta_x = nablaVarianceFunction(x,data,inv)
     #print "delta_x:" , delta_x
-    return [ x[i] + ita * delta_x[i] for i in range (len(x))]
+    return [ x[i] + ita * delta_x[i] for i in range (dimension)]
 
 def getEquilibriumPoint(x,data,inv,ita,maxIteration):
     x_old = x
     iteration = 1
     for i in range(maxIteration):
         x_new = gradientDescentIteration(x_old,data,inv,ita)
-        if( (x_new[0] - x_old[0])/x_old[0] < 0.00001 and (x_new[1] - x_old[1])/x_old[1] < 0.00001):
+        
+        stopFlags = [( x_new[d] - x_old[d] ) / x_old[d] < 0.00001 for d in range (dimension)]
+        
+        if( all(stopFlags) ):
             break
         else:
             x_old = x_new
@@ -169,14 +183,17 @@ def isExistInList(sepList, point, min_accepted_covariance):
             return i
     return -1
 
+#remove duplicate SEPs and return a reduced SEPs list
+#min_accepted_covariance is set to judge if two SEPs are the same one
+#if the covariance of two points are larger than the min_accepted_covariance then we determine that they are one SEP point
 def reduceSEPs(seps, min_accepted_covariance):
     sepList = []
     sepIndexMap = {}
     for i in range (len(seps)):
-        index = isExistInList(sepList, [seps[i,0],seps[i,1]], min_accepted_covariance)
+        index = isExistInList(sepList, seps[i], min_accepted_covariance)
         if index == -1 :
             index = len(sepList)
-            sepList.append([seps[i,0],seps[i,1]])
+            sepList.append(seps[i])
         sepIndexMap[i] = index
     return array(sepList), sepIndexMap
 
@@ -188,7 +205,7 @@ def reduceSEPs(seps, min_accepted_covariance):
 
 def getGeometricDistance(x1, x2):
     d = 0.
-    for i in range (len(x1)):
+    for i in range (dimension):
         d += (x1[i] - x2[i])**2
     return math.sqrt(d)
 
@@ -347,6 +364,7 @@ def getCE(references, clusters, referencesNum, clustersNum, Nrc):
 
 # <codecell>
 
+#Reference ID and ClusterID start from 1
 def getFScore(references, clusters, referencesNum, clustersNum, Nrc):  
     size = len(clusters)
     
@@ -357,7 +375,8 @@ def getFScore(references, clusters, referencesNum, clustersNum, Nrc):
         Nr[int(references[i]) -1 ] += 1.
         Nc[int(clusters[i]) - 1 ] += 1.
 
-
+    print 'Nr', Nr
+    print 'Nc', Nc
     R = [[ float(Nrc[r][c]) / Nr[r] for c in range (clustersNum)] for r in range (referencesNum)]
     P = [[ float(Nrc[r][c]) /Nc[c] for c in range (clustersNum)] for r in range (referencesNum)]
     F = [[ 2*R[r][c] * P[r][c] / (R[r][c] + P[r][c] + 0.000000000000001) for c in range (clustersNum) ] for r in range (referencesNum)]
@@ -384,6 +403,40 @@ def getFScore(references, clusters, referencesNum, clustersNum, Nrc):
         sumTmp += Nr[r] / size * Fr[r]
         
     return sumTmp
+
+# <markdowncell>
+
+# ##High Dimension Virtualization
+
+# <codecell>
+
+#-*- coding:utf-8 -*-
+from pylab import *
+from numpy import *
+def pca(data,nRedDim=0,normalise=1):
+   
+    # normalization
+    m = mean(data,axis=0)
+    data -= m
+    # covariance matrix
+    C = cov(transpose(data))
+    # compute eigen vectors, decreasing ordered 
+    evals,evecs = linalg.eig(C)
+    indices = argsort(evals)
+    indices = indices[::-1]
+    evecs = evecs[:,indices]
+    evals = evals[indices]
+    if nRedDim>0:
+        evecs = evecs[:,:nRedDim]
+   
+    if normalise:
+        for i in range(shape(evecs)[1]):
+            evecs[:,i] / linalg.norm(evecs[:,i]) * sqrt(evals[i])
+    # new data matrix
+    x = dot(transpose(evecs),transpose(data))
+    # recompute reduction data
+    y=transpose(dot(evecs,x))+m
+    return x,y,evals,evecs,indices
 
 # <markdowncell>
 
