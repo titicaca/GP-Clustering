@@ -31,12 +31,15 @@ Project in Artificial Intelligence and Machine Learning WS 2013/14
 
 2.1. Intallation of Ipython notebook
 	A installation Guide: http://ipython.org/install.html
-	If you are in windows, you can just download Ipython.exe in the following link: http://www.lfd.uci.edu/~gohlke/pythonlibs/#ipython
+	
 2.2. Install Python Dependency Packages if some needed packages are missing
+
 2.3. Go to the root path of the project, and start ipython notebook with the command:
-	>ipython notebook --pylab inline
+	>ipython notebook
+	
 2.4. Open notebooks and run the codes (for some big dataset, the clustering test might take some time..)
 	The Package GPClustering.py which is used in clustering test can be re-downloaded in the notebook GPClustering_Impl.ipynb, if it is missing
+	
 2.5. Open schools.html with IE Explore to see the Application of ACT Schools (Chrome and Firefox cannot work beause of ActiveX) 
 
 3. Dataset Download: 
