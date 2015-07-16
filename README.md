@@ -12,35 +12,48 @@ READ ME
 Project in Artificial Intelligence and Machine Learning WS 2013/14
 	-- Clustering Algorithm based on Gaussian Process
 	
-1.File Index:
+1. File Index:
+
 	1.1. Folders:
+	
 		Dataset  -- stores dataset files
+		
 		Markers -- stores the markers with differernt colors for GMap Clustering Application 
+		
 		results -- stores the clustering results of ACT Schools
+		
 	1.2. Notebook:
+	
 		GPClustering_Impl.ipynb  -- Implementation of GPClustering Package
+		
 		GPClustering_Variance.ipynb -- Variance Test with Differernt Covariance Function Parameters
+		
 		GPClustering_Test.ipynb -- GP Clustering Test with different datasets 
+		
 		GPClustering_Test_HighDimension.ipynb -- GP Clustering Test with high dimensional dataset
+		
 		KMeans_Test.ipynb -- KMeans Clustering Test with different datasets
+		
 	1.3 Other Files:
+	
 		GPClustering.py -- The python package of our implemented GPClustering, which can be exported in notebook GPClustering_Impl.ipynb  
+		
 		schools.html -- The Clustering Application of ACT Schools
 
 2. HOW TO:
 
-2.1. Intallation of Ipython notebook
+	2.1. Intallation of Ipython notebook
 	A installation Guide: http://ipython.org/install.html
 	
-2.2. Install Python Dependency Packages if some needed packages are missing
+	2.2. Install Python Dependency Packages if some needed packages are missing
 
-2.3. Go to the root path of the project, and start ipython notebook with the command:
+	2.3. Go to the root path of the project, and start ipython notebook with the command:
 	>ipython notebook
 	
-2.4. Open notebooks and run the codes (for some big dataset, the clustering test might take some time..)
+	2.4. Open notebooks and run the codes (for some big dataset, the clustering test might take some time..)
 	The Package GPClustering.py which is used in clustering test can be re-downloaded in the notebook GPClustering_Impl.ipynb, if it is missing
 	
-2.5. Open schools.html with IE Explore to see the Application of ACT Schools (Chrome and Firefox cannot work beause of ActiveX) 
+	2.5. Open schools.html with IE Explore to see the Application of ACT Schools (Chrome and Firefox cannot work beause of ActiveX) 
 
 3. Dataset Download: 
 
