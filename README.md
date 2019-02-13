@@ -3,11 +3,10 @@
 In this project, we develop an understanding of the idea for clustering with Gaussian process models, according to the work of Hyun-Chul Kim and Jaewook Lee. Based on that, we implement a Gaussian Process Clustering Python Package, and perform some clustering tests with different datasets.
 
 
-More details about this project can be found in the final report:
-http://pan.baidu.com/s/1kTpIdgz
-==============
+More details about this project can be found in the [report](
+https://www.ki.tu-berlin.de/fileadmin/fg135/publikationen/Yang_2014_GPC.pdf)
 
-READ ME
+-------
 
 Project in Artificial Intelligence and Machine Learning WS 2013/14
 	-- Clustering Algorithm based on Gaussian Process
